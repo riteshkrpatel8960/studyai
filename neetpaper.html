@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – NEET NTA Style</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:10px;}
+.container{display:flex;gap:20px;}
+.left{flex:3;}
+.right{flex:1;background:#f5f5f5;padding:10px;border-radius:10px;height:400px;overflow:auto;}
+
+button{margin:5px;padding:10px 15px;cursor:pointer;}
+#timer{font-size:22px;color:red;text-align:right;}
+
+.answered{background:green;color:#fff;}
+.review{background:orange;color:#fff;}
+.current{border:3px solid blue;}
+
+#examBox{display:none;}
+#answerSection{display:none;background:#f7f7f7;padding:15px;margin-top:20px;}
+
+.question-img{
+  max-width:500px;
+  width:100%;
+  height:auto;
+  margin:15px 0;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>NEET Medium</h2>
+
+<div id="paperList"></div>
+
+<!-- 🔥 START BUTTON AREA -->
+<div id="startArea"></div>
+
+<div id="examBox">
+
+<h3 id="paperTitle"></h3>
+<div id="timer">03:00:00</div>
+
+<div class="container">
+
+<div class="left">
+<div id="questionArea"></div>
+
+<button onclick="prevQ()">Previous</button>
+<button onclick="markReview()">Mark Review</button>
+<button onclick="nextQ()">Next</button>
+<button onclick="submitPaper()">Submit Paper</button>
+</div>
+
+<div class="right">
+<h4>Questions</h4>
+<div id="palette"></div>
+</div>
+
+</div>
+</div>
+
+<div id="answerSection">
+<h3>Result Summary</h3>
+<p id="scoreBox"></p>
+<p id="countBox"></p>
+<p id="progressBox"></p>
+<button onclick="reattempt()">Reattempt Paper</button>
+
+<h3>Detailed Answers</h3>
+<div id="answerDetails"></div>
+</div>
+
+</div>
+
+<script>
+
+// ==========================
+// 📚 PAPERS DATA
+// ==========================
+let paperQuestions = [];
+
+
+let currentPaper=null;
+let currentIndex=0;
+let answers={};
+let reviewMarks={};
+let timerInterval;
+let totalTime;
+
+
+// ==========================
+// 🔥 CREATE BUTTONS
+// ==========================
+window.onload = function(){
+
+ let list = document.getElementById("paperList");
+
+ for(let i=1;i<=25;i++){
+
+   let btn = document.createElement("button");
+
+   btn.innerText = "Paper " + i;
+
+   btn.onclick = function(){
+      selectPaper(i);
+   };
+
+   btn.ondblclick = function(){
+      startPaper(i);
+   };
+
+   list.appendChild(btn);
+ }
+};
+async function loadPaperQuestions(paperNo){
+
+ try{
+
+   const res = await fetch(
+     `http://localhost:3000/api/questions?exam=NEET&paperSet=${paperNo}`
+   );
+paperQuestions = await res.json();
+
+if(!Array.isArray(paperQuestions)){
+   paperQuestions = [];
+}
+
+   paperQuestions.sort(
+      (a,b)=>a.questionNo-b.questionNo
+   );
+
+ }catch(err){
+
+   console.log(err);
+
+   alert("Questions load failed");
+
+ }
+
+}
+
+
+// ==========================
+// 📌 SELECT PAPER (SHOW START)
+// ==========================
+function selectPaper(no){
+
+ currentPaper = no;
+
+ document.getElementById("startArea").innerHTML = `
+   <h3>Paper ${no}</h3>
+   <button onclick="startPaper(${no})">
+      START PAPER
+   </button>
+ `;
+}
+
+// ==========================
+// ▶️ START PAPER
+// ==========================
+async function startPaper(no){
+
+ currentPaper = no;
+
+ await loadPaperQuestions(no);
+
+ if(paperQuestions.length === 0){
+
+   alert("No Questions Found");
+
+   return;
+
+ }
+
+ let savedResult =
+ localStorage.getItem("submitted_"+no);
+
+ if(savedResult){
+
+   showResult(
+     JSON.parse(savedResult)
+   );
+
+   return;
+ }
+
+ loadAttempt();
+
+ document.getElementById("paperList").style.display="none";
+ document.getElementById("startArea").style.display="none";
+ document.getElementById("examBox").style.display="block";
+
+ document.getElementById("paperTitle").innerText =
+ "Paper " + no;
+
+ createPalette();
+ showQuestion();
+ startTimer();
+}
+
+// ==========================
+// ⏱️ TIMER
+// ==========================
+function startTimer(){
+
+ clearInterval(timerInterval);
+
+ let savedTime=localStorage.getItem("time_"+currentPaper);
+ totalTime=savedTime?parseInt(savedTime):3*60*60;
+
+ timerInterval=setInterval(()=>{
+
+  let h=Math.floor(totalTime/3600);
+  let m=Math.floor((totalTime%3600)/60);
+  let s=totalTime%60;
+
+  document.getElementById("timer").innerText=
+  `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  totalTime--;
+  localStorage.setItem("time_"+currentPaper,totalTime);
+
+  if(totalTime<=0) submitPaper();
+
+ },1000);
+}
+
+
+// ==========================
+// 🧠 SHOW QUESTION
+// ==========================
+function showQuestion(){
+
+ let q = paperQuestions[currentIndex];
+
+ let questionText = q.question
+   .replace(/\\n/g,"<br>")
+   .replace(/\n/g,"<br>")
+   .replace(/([a-zA-Z0-9]+)\^(-?\d+)/g,"$1<sup>$2</sup>")
+   .replace(/\+\-/g,"&plusmn;");
+
+ document.getElementById("questionArea").innerHTML = `
+
+ <p>
+   <b>
+     Q${q.questionNo}.
+     ${questionText}
+   </b>
+ </p>
+
+ ${q.image ?
+ `
+ <img
+   src="${q.image}"
+   class="question-img">
+ `
+ : ""}
+
+ ${q.options.map(opt=>`
+
+ <label>
+
+ <input
+   type="radio"
+   name="opt"
+   value="${opt}"
+
+   ${answers[currentIndex]==opt
+      ? "checked"
+      : ""}
+
+   onchange="saveAnswer('${opt}')">
+
+   ${opt}
+
+ </label><br>
+
+ `).join("")}
+
+ `;
+
+ updatePalette();
+}
+
+
+function saveAnswer(opt){
+ answers[currentIndex]=opt;
+ saveAttempt();
+ updatePalette();
+}
+
+function markReview(){
+ if(reviewMarks[currentIndex]) delete reviewMarks[currentIndex];
+ else reviewMarks[currentIndex]=true;
+ saveAttempt();
+ updatePalette();
+}
+
+function nextQ(){
+ if(currentIndex < paperQuestions.length - 1){
+   currentIndex++;
+   showQuestion();
+ }
+}
+function prevQ(){
+ if(currentIndex>0){
+  currentIndex--; showQuestion();
+ }
+}
+
+
+// ==========================
+// 🎯 PALETTE
+// ==========================
+function createPalette(){
+
+ let html="";
+ let len = paperQuestions.length;
+
+ for(let i=0;i<len;i++){
+  html+=`<button id="pal_${i}" onclick="jump(${i})">${i+1}</button>`;
+ }
+
+ document.getElementById("palette").innerHTML=html;
+}
+
+function jump(i){
+ currentIndex=i;
+ showQuestion();
+}
+
+function updatePalette(){
+
+ let len = paperQuestions.length;
+
+ for(let i=0;i<len;i++){
+
+  let btn=document.getElementById("pal_"+i);
+  btn.className="";
+
+  if(answers[i]) btn.classList.add("answered");
+  if(reviewMarks[i]) btn.classList.add("review");
+  if(i===currentIndex) btn.classList.add("current");
+ }
+}
+
+
+// ==========================
+// 💾 SAVE LOAD
+// ==========================
+function saveAttempt(){
+ let data={answers,reviewMarks,index:currentIndex};
+ localStorage.setItem("attempt_"+currentPaper,JSON.stringify(data));
+}
+
+function loadAttempt(){
+
+ let saved=localStorage.getItem("attempt_"+currentPaper);
+
+ if(saved){
+  let data=JSON.parse(saved);
+  answers=data.answers||{};
+  reviewMarks=data.reviewMarks||{};
+  currentIndex=data.index||0;
+ }else{
+  answers={};
+  reviewMarks={};
+  currentIndex=0;
+ }
+}
+
+
+// ==========================
+// ✅ SUBMIT
+// ==========================
+function submitPaper(){
+
+ clearInterval(timerInterval);
+
+ let correct=0,wrong=0,attempted=0;
+ let questions = paperQuestions;
+
+ questions.forEach((q,i)=>{
+  if(answers[i]){
+   attempted++;
+   if(answers[i]===q.answer) correct++;
+   else wrong++;
+  }
+ });
+
+ let score=(correct*4)-(wrong*1);
+ let progress=Math.round((attempted/questions.length)*100);
+
+ let resultData={score,correct,wrong,attempted,progress};
+
+ localStorage.setItem("submitted_"+currentPaper,JSON.stringify(resultData));
+ localStorage.removeItem("attempt_"+currentPaper);
+ localStorage.removeItem("time_"+currentPaper);
+
+ showResult(resultData);
+}
+
+
+// ==========================
+// 📊 RESULT
+// ==========================
+function showResult(data){
+
+ document.getElementById("examBox").style.display="none";
+ document.getElementById("answerSection").style.display="block";
+
+ document.getElementById("scoreBox").innerText="Score: "+data.score+" / 720";
+ document.getElementById("countBox").innerText=
+ `Correct: ${data.correct} | Wrong: ${data.wrong} | Attempted: ${data.attempted}`;
+ document.getElementById("progressBox").innerText=
+ "Progress: "+data.progress+"%";
+
+ showAnswers();
+}
+
+function showAnswers(){
+ let html="";
+ let questions = paperQuestions;
+ questions.forEach((q,i)=>{
+  html+=`<p><b>Q${i+1} Answer:</b> ${q.answer} – ${q.explanation}</p>`;
+ });
+ document.getElementById("answerDetails").innerHTML=html;
+}
+
+function reattempt(){
+ localStorage.removeItem("submitted_"+currentPaper);
+ location.reload();
+}
+
+</script>
+
+</body>
+</html>

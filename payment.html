@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – Payment</title>
+<style>
+body{
+  font-family:Arial;
+  background:#f2f4f8;
+  padding:20px;
+  text-align:center;
+}
+.box{
+  max-width:400px;
+  background:white;
+  padding:30px;
+  margin:auto;
+  border-radius:10px;
+  box-shadow:0 0 10px #ccc;
+}
+.paybtn{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:18px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.phonepe{ background:#5f259f; color:white; }
+.gpay{ background:#1a73e8; color:white; }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🔐 Unlock Test</h2>
+  <p id="info"></p>
+
+  <button class="paybtn phonepe" onclick="pay('phonepe')">Pay with PhonePe</button>
+  <button class="paybtn gpay" onclick="pay('gpay')">Pay with Google Pay</button>
+
+  <p style="margin-top:15px;color:gray;">(Demo Payment – no real money)</p>
+</div>
+
+<script>
+const level = localStorage.getItem("examLevel");
+
+if(level === "hard"){
+  document.getElementById("info").innerText = "Hard Level Test – ₹99";
+}
+else if(level === "neet"){
+  document.getElementById("info").innerText = "NEET Preparation Test – ₹99";
+}
+else if(level === "ssc"){
+  document.getElementById("info").innerText = "SSC Preparation Test – ₹99";
+}
+else{
+  document.getElementById("info").innerText = "Medium Level Test – ₹49";
+}
+
+
+
+function pay(app){
+  if(app === "phonepe"){
+    alert("Opening PhonePe... (demo)");
+  }
+  if(app === "gpay"){
+    alert("Opening Google Pay... (demo)");
+  }
+
+  // simulate payment success
+  setTimeout(()=>{
+    alert("Payment Successful ✅");
+
+   if(level === "hard"){
+  window.location.href = "hard.html";
+}
+else if(level === "neet"){
+  window.location.href = "neetmedium.html";
+}
+else if(level === "ssc"){
+  window.location.href = "sscmedium.html";
+}
+else{
+  window.location.href = "medium.html";
+}
+
+
+  }, 1500);
+}
+</script>
+
+</body>
+</html>

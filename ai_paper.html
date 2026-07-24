@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – JEE Free AI Practice</title>
+<style>
+body{font-family:Arial;background:#f2f4f8;padding:20px;}
+.box{max-width:800px;background:white;padding:20px;margin:auto;border-radius:10px;box-shadow:0 0 10px #ccc;}
+#timer{font-size:20px;color:red;text-align:right;}
+.question{margin:15px 0;}
+button{padding:10px 20px;background:#1ecb97;color:white;border:none;border-radius:6px;}
+table{border-collapse:collapse;width:100%;margin-top:20px;}
+td,th{border:1px solid #ccc;padding:8px;}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="promptBox">
+<h2>🟢 JEE Free AI Practice</h2>
+<input type="text" id="topic" placeholder="Motion 20 minutes" style="width:100%;padding:10px;">
+<button onclick="generate()">Generate AI Paper</button>
+</div>
+
+<div class="box">
+<div id="timer"></div>
+<div id="questions"></div>
+<button onclick="submit()">Submit Test</button>
+
+<h3 id="score"></h3>
+
+<table>
+<tr>
+<th>Q</th><th>Question</th><th>Your</th><th>Correct</th><th>Status</th>
+</tr>
+<tbody id="resultTable"></tbody>
+</table>
+</div>
+
+<script>
+let paper=[],timeLeft=1800,timer;
+
+// ----------------- GENERATE ------------------
+async function generate(){
+const input = document.getElementById("topic").value.toLowerCase();
+
+// Read topic
+const topic = input.match(/[a-z]+/)[0];
+
+// Read number of questions
+const qCount = input.match(/(\d+)\s*question/)?.[1] || 10;
+
+// Read time
+const t = input.match(/(\d+)\s*(min|minute|minutes)/)?.[1] || 30;
+timeLeft = t * 60;
+
+// Send correct request to AI
+const res = await fetch("http://localhost:3000/ask",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+question: `
+Create exactly ${qCount} JEE MCQ questions on ${topic}.
+
+Use this format strictly:
+Q1. Question
+A) option
+B) option
+C) option
+D) option
+Answer: A
+
+English only.
+No explanation.
+`
+})
+});
+
+const data = await res.json();
+paper = parseAI(data.answer);
+showQuestions();
+startTimer();
+document.getElementById("promptBox").style.display="none";
+}
+
+
+// ----------------- PARSE AI ------------------
+function parseAI(text){
+let lines=text.split("\n"),qs=[],q=null;
+lines.forEach(l=>{
+l=l.trim();
+if(l.startsWith("Q")){
+if(q)qs.push(q);
+q={question:l,A:"",B:"",C:"",D:"",correct:"A"};
+}
+if(l.startsWith("A)"))q.A=l.replace("A)","");
+if(l.startsWith("B)"))q.B=l.replace("B)","");
+if(l.startsWith("C)"))q.C=l.replace("C)","");
+if(l.startsWith("D)"))q.D=l.replace("D)","");
+if(l.startsWith("Answer"))q.correct=l.split(":")[1].trim();
+});
+if(q)qs.push(q);
+return qs;
+}
+
+// ----------------- SHOW ------------------
+function showQuestions(){
+const box=document.getElementById("questions");
+box.innerHTML="";
+paper.forEach((q,i)=>{
+box.innerHTML+=`
+<div class="question">
+<b>${q.question}</b><br>
+<label><input type="radio" name="q${i}" value="A">${q.A}</label><br>
+<label><input type="radio" name="q${i}" value="B">${q.B}</label><br>
+<label><input type="radio" name="q${i}" value="C">${q.C}</label><br>
+<label><input type="radio" name="q${i}" value="D">${q.D}</label>
+</div>`;
+});
+}
+
+// ----------------- TIMER ------------------
+function startTimer(){
+  clearInterval(timer);
+  examEnded = false;
+
+  timer = setInterval(() => {
+    if (examEnded) {
+      clearInterval(timer);
+      return;
+    }
+
+    let m = Math.floor(timeLeft / 60);
+    let s = timeLeft % 60;
+
+    document.getElementById("timer").innerText =
+      "⏰ " + m + ":" + (s < 10 ? "0" : "") + s;
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      submit();
+      return;
+    }
+
+    timeLeft--;
+  }, 1000);
+}
+
+
+// ----------------- SUBMIT ------------------
+function submit(){
+  if (examEnded) return;
+  examEnded = true;
+
+  clearInterval(timer);
+
+  let score = 0;
+  let table = "";
+
+  paper.forEach((q,i)=>{
+    let user = document.querySelector(`input[name=q${i}]:checked`)?.value || "NA";
+    let correct = q.correct;
+    let status = user === correct ? "Correct" : "Wrong";
+
+    if (user === correct) score++;
+
+    table += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${q.question}</td>
+        <td>${user}</td>
+        <td>${correct}</td>
+        <td>${status}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("score").innerText =
+    "Score: " + score + " / " + paper.length;
+
+  document.getElementById("resultTable").innerHTML = table;
+}
+
+</script>
+
+</body>
+</html>

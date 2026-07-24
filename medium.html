@@ -1,0 +1,372 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – JEE Medium Level Exam</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:800px;background:white;padding:20px;margin:auto;border-radius:10px;}
+#timer{font-size:22px;color:red;text-align:right;}
+.question{border-bottom:1px solid #ddd;padding:10px;margin-bottom:10px;}
+button{padding:10px 20px;background:#ff9800;color:white;border:none;border-radius:5px;}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="promptBox">
+<h2> 🟡 JEE Medium Level Exam</h2>
+
+<input type="text" id="studentPrompt" placeholder="Physics motion 20 questions 40 minutes" style="width:100%;padding:10px;">
+<br><br>
+<button onclick="startExam()">Start Exam</button>
+</div>
+
+<div class="box">
+<div id="timer" style="display:none">40:00</div>
+<div id="questions"></div>
+<button onclick="submitExam()">Submit Exam</button>
+
+<h2 id="score"></h2>
+<table width="100%" border="1">
+<tr>
+<th>Q</th><th>Question</th><th>Your</th><th>Correct</th><th>Status</th>
+</tr>
+<tbody id="resultTable"></tbody>
+</table>
+</div>
+
+<script>
+
+// ---------------- QUESTION BANK (JEE Medium) ----------------
+
+const questionBank = [
+
+{subject:"physics",topic:"motion",q:"What is speed?",options:["Distance/Time","Force","Energy","Power"],answer:"Distance/Time"},
+{subject:"physics",topic:"motion",q:"Unit of velocity?",options:["m/s","kg","m","s"],answer:"m/s"},
+{subject:"physics",topic:"force",q:"SI unit of force?",options:["Newton","Joule","Watt","Pascal"],answer:"Newton"},
+
+{subject:"maths",topic:"algebra",q:"2x + 5 = 9, x=?",options:["2","4","1","3"],answer:"2"},
+{subject:"maths",topic:"algebra",q:"Value of x in x²=16?",options:["4","2","6","8"],answer:"4"},
+
+{subject:"chemistry",topic:"atom",q:"Who discovered atom?",options:["Dalton","Newton","Einstein","Bohr"],answer:"Dalton"},
+{subject:"chemistry",topic:"atom",q:"Smallest particle of matter?",options:["Atom","Molecule","Cell","Electron"],answer:"Atom"}
+
+];
+let course = localStorage.getItem("selectedCourse");
+
+if(!course){
+  alert("Please select a course first");
+  window.location = "course.html";
+}
+
+let saved = JSON.parse(localStorage.getItem(course + "Progress") || "[]");
+
+let masterBank = questionBank.map(q => {
+  let old = saved.find(s => s.q === q.q);
+  return old ? old : q;
+});
+
+
+
+// ---------------- START EXAM ----------------
+
+let paper = [];
+
+function startExam(){
+let prompt = document.getElementById("studentPrompt").value.toLowerCase();
+
+let topic = prompt.match(/motion|force|algebra|atom/)?.[0] || "motion";
+let subject = prompt.includes("physics") ? "physics" :
+              prompt.includes("math") ? "maths" : "chemistry";
+
+let questions = parseInt(prompt.match(/\d+/)?.[0] || 10);
+let time = parseInt(prompt.match(/(\d+)\s*(min|minute|minutes)/)?.[1] || 40);
+
+paper = questionBank.filter(q=>q.subject==subject && q.topic==topic).slice(0,questions);
+
+let box = document.getElementById("questions");
+box.innerHTML="";
+
+paper.forEach((q,i)=>{
+box.innerHTML+=`
+<div class="question">
+<b>Q${i+1}. ${q.q}</b><br>
+${q.options.map(o=>`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label><br>`).join("")}
+</div>`;
+});
+
+document.getElementById("promptBox").style.display="none";
+document.getElementById("timer").style.display="block";
+startTimer(time);
+}
+
+// ---------------- SUBMIT ----------------
+
+function submitExam(){
+let score=0;
+let table="";
+
+paper.forEach((q,i)=>{
+let user=document.querySelector(`input[name=q${i}]:checked`)?.value || "Not Answered";
+let correct=q.answer;
+let status = user==correct ? "Correct" : "Wrong";
+if(user==correct) score++;
+
+table+=`<tr><td>${i+1}</td><td>${q.q}</td><td>${user}</td><td>${correct}</td><td>${status}</td></tr>`;
+});
+
+document.getElementById("score").innerHTML="Score: "+score+" / "+paper.length;
+document.getElementById("resultTable").innerHTML=table;
+window.stopTimer();
+}
+
+</script>
+
+<script src="timer.js"></script>
+
+</body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – JEE Medium Level Exam</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:800px;background:white;padding:20px;margin:auto;border-radius:10px;}
+#timer{font-size:22px;color:red;text-align:right;}
+.question{border-bottom:1px solid #ddd;padding:10px;margin-bottom:10px;}
+button{padding:10px 20px;background:#ff9800;color:white;border:none;border-radius:5px;}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="promptBox">
+<h2> 🟡 JEE Medium Level Exam</h2>
+
+<input type="text" id="studentPrompt" placeholder="Physics motion 20 questions 40 minutes" style="width:100%;padding:10px;">
+<br><br>
+<button onclick="startExam()">Start Exam</button>
+</div>
+
+<div class="box">
+<div id="timer" style="display:none">40:00</div>
+<div id="questions"></div>
+<button onclick="submitExam()">Submit Exam</button>
+
+<h2 id="score"></h2>
+<table width="100%" border="1">
+<tr>
+<th>Q</th><th>Question</th><th>Your</th><th>Correct</th><th>Status</th>
+</tr>
+<tbody id="resultTable"></tbody>
+</table>
+</div>
+<script>
+
+// ---------------- QUESTION BANK (JEE) ----------------
+
+const questionBank = [
+
+{subject:"physics",topic:"motion",q:"What is speed?",options:["Distance/Time","Force","Energy","Power"],answer:"Distance/Time",completed:false,repeatCount:0},
+{subject:"physics",topic:"motion",q:"Unit of velocity?",options:["m/s","kg","m","s"],answer:"m/s",completed:false,repeatCount:0},
+{subject:"physics",topic:"force",q:"SI unit of force?",options:["Newton","Joule","Watt","Pascal"],answer:"Newton",completed:false,repeatCount:0},
+
+{subject:"maths",topic:"algebra",q:"2x + 5 = 9, x=?",options:["2","4","1","3"],answer:"2",completed:false,repeatCount:0},
+{subject:"maths",topic:"algebra",q:"Value of x in x²=16?",options:["4","2","6","8"],answer:"4",completed:false,repeatCount:0},
+
+{subject:"chemistry",topic:"atom",q:"Who discovered atom?",options:["Dalton","Newton","Einstein","Bohr"],answer:"Dalton",completed:false,repeatCount:0},
+{subject:"chemistry",topic:"atom",q:"Smallest particle of matter?",options:["Atom","Molecule","Cell","Electron"],answer:"Atom",completed:false,repeatCount:0}
+
+];
+
+
+// ---------------- COURSE MEMORY ----------------
+
+let course = "jeeMedium";
+if(!course){
+  alert("Please select course first");
+  window.location = "course.html";
+}
+
+let saved = JSON.parse(localStorage.getItem(course+"Progress") || "[]");
+
+let masterBank = questionBank.map(q=>{
+  let old = saved.find(s=>s.q===q.q);
+  return old ? old : q;
+});
+
+// ---------------- PROMPT PARSER ----------------
+
+function parsePrompt(prompt){
+  let topic = prompt.match(/motion|force|algebra|atom/)?.[0] || null;
+  let subject = prompt.includes("physics") ? "physics" :
+                prompt.includes("math") ? "maths" :
+                prompt.includes("chem") ? "chemistry" : null;
+
+  let questions = parseInt(prompt.match(/\d+/)?.[0] || 10);
+  let time = parseInt(prompt.match(/(\d+)\s*(min|minute|minutes)/)?.[1] || 30);
+
+  return { topic, subject, questions, time };
+}
+
+// ---------------- START EXAM ----------------
+
+let paper = [];
+
+function startExam(){
+let raw = document.getElementById("studentPrompt").value.toLowerCase();
+let data = parsePrompt(raw);
+
+let topic = data.topic;
+let subject = data.subject;
+let questions = data.questions;
+let time = data.time;
+
+let filtered = [];
+
+// MODE 1 → specific topic
+if(topic){
+  filtered = masterBank.filter(q =>
+    q.topic===topic && (subject ? q.subject===subject : true)
+  );
+}
+
+// MODE 2 → mixed random
+else{
+  let per = Math.floor(questions/3);
+  let phy = masterBank.filter(q=>q.subject=="physics").slice(0,per);
+  let math = masterBank.filter(q=>q.subject=="maths").slice(0,per);
+  let chem = masterBank.filter(q=>q.subject=="chemistry").slice(0,per);
+  paper = [...phy,...math,...chem];
+}
+
+// spaced repetition
+if(filtered.length){
+  let unsolved = filtered.filter(q=>!q.completed);
+  if(unsolved.length>0){
+    paper = unsolved.slice(0,questions);
+  }else{
+    let minRepeat = Math.min(...filtered.map(q=>q.repeatCount));
+    paper = filtered.filter(q=>q.repeatCount===minRepeat).slice(0,questions);
+  }
+}
+
+// render
+let box=document.getElementById("questions");
+box.innerHTML="";
+
+paper.forEach((q,i)=>{
+  let msg = q.completed ? `⚠️ Attempted ${q.repeatCount+1} times` : "🟢 First time";
+  box.innerHTML+=`
+  <div class="question">
+    <div style="color:#ff9800">${msg}</div>
+    <b>Q${i+1}. ${q.q}</b><br>
+    ${q.options.map(o=>`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label><br>`).join("")}
+  </div>`;
+});
+
+document.getElementById("promptBox").style.display="none";
+document.getElementById("timer").style.display="block";
+startTimer(time);
+}
+
+// ---------------- SUBMIT ----------------
+
+function submitExam(){
+let score=0, table="";
+
+paper.forEach((q,i)=>{
+let user=document.querySelector(`input[name=q${i}]:checked`)?.value || "Not Answered";
+let status=user==q.answer?"Correct":"Wrong";
+if(user==q.answer) score++;
+
+if(user !== "Not Answered"){
+   if(!q.completed) q.completed=true;
+   else q.repeatCount++;
+}
+
+
+table+=`<tr><td>${i+1}</td><td>${q.q}</td><td>${user}</td><td>${q.answer}</td><td>${status}</td></tr>`;
+});
+
+// save memory
+localStorage.setItem("jeeMediumProgress", JSON.stringify(masterBank));
+
+
+document.getElementById("score").innerHTML="Score: "+score+" / "+paper.length;
+document.getElementById("resultTable").innerHTML=table;
+stopTimer();
+
+}
+
+</script>
+
+
+
+<script src="timer.js"></script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI Dashboard</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#eef2f7;
+  padding:20px;
+}
+
+.box{
+  max-width:900px;
+  margin:auto;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  margin:15px 0;
+  cursor:pointer;
+  transition:0.3s;
+  box-shadow:0 0 5px rgba(0,0,0,0.1);
+}
+
+.card:hover{
+  transform:scale(1.03);
+  background:#f5f5f5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>📊 StudyAI</h2>
+
+<!-- 🔥 NEET CARD -->
+<div class="card" onclick="openNeet()">
+  <h3>📐 JEE Practice Test</h3>
+  <p>Start Physics / Maths / Chemistry mock test</p>
+</div>
+
+</div>
+
+<script>
+function openNeet(){
+   localStorage.setItem("selectedCourse","jee"); // course memory
+   window.location.href="jeepaper.html"; // 🔥 link page
+}
+</script>
+
+</body>
+</html>
+
+
+

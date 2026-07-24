@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – NEET Preparation Test</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:800px;background:white;padding:20px;margin:auto;border-radius:10px;}
+#timer{font-size:22px;color:red;text-align:right;}
+.question{border-bottom:1px solid #ddd;padding:10px;margin-bottom:10px;}
+.question img{
+  max-width:400px;
+  width:100%;
+  height:auto;
+  margin:10px 0;
+  border-radius:8px;
+}
+button{padding:10px 20px;background:#e53935;color:white;border:none;border-radius:5px;}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="promptBox">
+<h2> 🔴 NEET Exam</h2>
+
+<input type="text" id="studentPrompt" placeholder="Physics motion 20 questions 40 minutes" style="width:100%;padding:10px;">
+
+
+
+<br><br>
+<button onclick="startExam()">Start Exam</button>
+</div>
+
+<div class="box">
+<div id="timer" style="display:none">40:00</div>
+<div id="questions"></div>
+<button onclick="submitExam()">Submit Exam</button>
+
+<h2 id="score"></h2>
+<table width="100%" border="1">
+<tr>
+<th>Q</th><th>Question</th><th>Your</th><th>Correct</th><th>Status</th>
+</tr>
+<tbody id="resultTable"></tbody>
+</table>
+</div>
+
+<div style="text-align:center; margin:30px 0;">
+    <button
+        onclick="window.location.href='neetpaper.html'"
+        style="
+            padding:15px 35px;
+            font-size:18px;
+            background:#1976D2;
+            color:white;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+        ">
+        📄 Smart Practice
+    </button>
+</div>
+
+<script>
+  
+
+// ---------------- TIMER ----------------
+
+let timerInterval;
+let remainingSeconds = 0;
+
+function startTimer(minutes){
+  remainingSeconds = minutes * 60;
+  updateTimerUI();
+
+  timerInterval = setInterval(()=>{
+    remainingSeconds--;
+    updateTimerUI();
+
+    if(remainingSeconds <= 0){
+      clearInterval(timerInterval);
+      alert("Time Up! Exam Auto Submitted.");
+      submitExam();
+    }
+  },1000);
+}
+
+function updateTimerUI(){
+  let min = Math.floor(remainingSeconds/60);
+  let sec = remainingSeconds % 60;
+  document.getElementById("timer").innerHTML =
+    `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+}
+
+// ---------------- QUESTION BANK ----------------
+
+
+// ---------------- COURSE MEMORY ----------------
+
+let course = localStorage.getItem("selectedCourse");
+if(!course){
+  alert("Please select course first");
+  window.location = "course.html";
+}
+
+let saved = JSON.parse(localStorage.getItem(course+"Progress") || "[]");
+
+let questionBank = [];
+let masterBank = [];
+
+async function loadQuestions() {
+
+  try {
+
+    const res = await fetch("http://localhost:3000/api/questions?exam=NEET");
+
+    questionBank = await res.json();
+
+    let saved = JSON.parse(
+      localStorage.getItem(course + "Progress") || "[]"
+    );
+
+    masterBank = questionBank.map(q => {
+
+      let old = saved.find(
+        s => s.question === q.question
+      );
+
+      return old
+        ? old
+        : {
+            ...q,
+            completed: false,
+            repeatCount: 0
+          };
+
+    });
+
+    console.log(masterBank);
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+
+}
+
+// ---------------- PROGRESS SYSTEM ----------------
+
+function updateProgress(){
+
+  let totalQuestions = masterBank.length;
+  let solvedQuestions = masterBank.filter(q => q.completed).length;
+
+  let percent = Math.floor((solvedQuestions / totalQuestions) * 100);
+
+  let bar = document.getElementById("progressBar");
+  let text = document.getElementById("progressText");
+
+  if(bar) bar.style.width = percent + "%";
+  if(text) text.innerText = "Completed: " + percent + "%";
+}
+
+// ---------------- PROMPT PARSER ----------------
+
+function parsePrompt(prompt){
+  let topic = prompt.match(/motion|force|cell|atom/)?.[0] || null;
+  let subject = prompt.includes("physics") ? "physics" :
+                prompt.includes("bio") ? "biology" :
+                prompt.includes("chem") ? "chemistry" : null;
+
+  let questions = parseInt(prompt.match(/\d+/)?.[0] || 10);
+  let time = parseInt(prompt.match(/(\d+)\s*(min|minute|minutes)/)?.[1] || 30);
+
+  return { topic, subject, questions, time };
+}
+
+// ---------------- START EXAM ----------------
+
+let paper = [];
+
+function startExam(){
+let raw = document.getElementById("studentPrompt").value.toLowerCase();
+let data = parsePrompt(raw);
+
+let topic = data.topic;
+let subject = data.subject;
+let questions = data.questions;
+let time = data.time;
+
+let filtered = [];
+
+// MODE 1 → specific topic
+if(topic){
+
+    filtered = masterBank.filter(q =>
+        q.subject === subject &&
+       (q.topic || "").toLowerCase() === topic
+    );
+
+}else{
+
+    filtered = masterBank.filter(q =>
+        q.subject === subject
+    );
+
+    // Random shuffle
+    filtered.sort(() => Math.random() - 0.5);
+
+}
+
+let unsolved = filtered.filter(q => !q.completed);
+
+if(unsolved.length >= questions){
+
+    paper = unsolved.slice(0, questions);
+
+}else{
+
+    paper = filtered.slice(0, questions);
+
+}
+
+// spaced repetition
+if(filtered.length){
+  let unsolved = filtered.filter(q=>!q.completed);
+  if(unsolved.length>0){
+    paper = unsolved.slice(0,questions);
+  }else{
+    let minRepeat = Math.min(...filtered.map(q=>q.repeatCount));
+    paper = filtered.filter(q=>q.repeatCount===minRepeat).slice(0,questions);
+  }
+}
+
+// render
+let box=document.getElementById("questions");
+box.innerHTML="";
+
+paper.forEach((q,i)=>{
+  let msg = q.completed ? `⚠️ Attempted ${q.repeatCount+1} times` : "🟢 First time";
+ box.innerHTML += `
+<div class="question">
+
+  <div style="color:#ff9800">${msg}</div>
+
+  <b>Q${i+1}. ${q.question}</b><br>
+
+  ${q.image ? `
+    <img
+      src="/${q.image}"
+      style="
+        max-width:400px;
+        width:100%;
+        margin:10px 0;
+        border-radius:8px;
+      ">
+  ` : ""}
+
+  ${q.options.map(o => `
+    <label>
+      <input type="radio" name="q${i}" value="${o}">
+      ${o}
+    </label><br>
+  `).join("")}
+
+</div>
+`;
+});
+
+document.getElementById("promptBox").style.display="none";
+document.getElementById("timer").style.display="block";
+startTimer(time);
+}
+
+// ---------------- SUBMIT ----------------
+
+function submitExam(){
+
+stopTimer();
+
+let score=0, table="";
+
+paper.forEach((q,i)=>{
+let user=document.querySelector(`input[name=q${i}]:checked`)?.value || "Not Answered";
+let status=user==q.answer?"Correct":"Wrong";
+if(user==q.answer) score++;
+
+if(user !== "Not Answered"){
+   if(!q.completed) q.completed = true;
+   else q.repeatCount++;
+}
+
+
+table += `<tr><td>${i+1}</td><td>${q.question}</td><td>${user}</td><td>${q.answer}</td><td>${status}</td></tr>`;
+});
+
+// save memory
+localStorage.setItem(course+"Progress", JSON.stringify(masterBank));
+
+document.getElementById("score").innerHTML="Score: "+score+" / "+paper.length;
+document.getElementById("resultTable").innerHTML=table;
+
+// 🔥 Progress update
+updateProgress();
+}
+
+// page load pe bhi progress load
+window.onload = async () => {
+
+  await loadQuestions();
+
+  updateProgress();
+
+};
+
+
+</script>
+
+
+</body>
+
+</body>

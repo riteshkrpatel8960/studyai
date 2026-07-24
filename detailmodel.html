@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – NEET Medium Papers</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:1000px;margin:auto;background:#fff;padding:20px;border-radius:10px;}
+button{margin:5px;padding:10px 15px;}
+#timer{font-size:22px;color:red;text-align:right;}
+.question{border-bottom:1px solid #ddd;padding:10px;}
+#examBox{display:none;}
+#answerSection{display:none;background:#f7f7f7;padding:15px;margin-top:20px;}
+.palette button{width:40px;height:40px;margin:3px;border:none;color:#fff;}
+.correct{background:green;}
+.wrong{background:red;}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>NEET Medium – 25 Papers</h2>
+
+<div id="paperList"></div>
+
+<div id="examBox">
+<h3 id="paperTitle"></h3>
+<div id="timer">03:00:00</div>
+
+<div class="palette" id="palette"></div>
+
+<div id="questionArea">
+
+<!-- ✅ QUESTION SPACE -->
+<div class="question">
+<p>Q1. Example Biology Question?</p>
+<label><input type="radio" name="q1" value="A"> A</label><br>
+<label><input type="radio" name="q1" value="B"> B</label><br>
+<label><input type="radio" name="q1" value="C"> C</label><br>
+<label><input type="radio" name="q1" value="D"> D</label>
+<p id="result_q1"></p>
+</div>
+
+<div class="question">
+<p>Q2. Example Botany Question?</p>
+<label><input type="radio" name="q2" value="A"> A</label><br>
+<label><input type="radio" name="q2" value="B"> B</label><br>
+<label><input type="radio" name="q2" value="C"> C</label><br>
+<label><input type="radio" name="q2" value="D"> D</label>
+<p id="result_q2"></p>
+</div>
+
+</div>
+
+<button onclick="submitPaper()">Submit Paper</button>
+
+</div>
+
+<div id="answerSection">
+<h3>Result Summary</h3>
+
+<p id="scoreBox"></p>
+<p id="countBox"></p>
+<p id="progressBox"></p>
+
+<button onclick="reattempt()">Reattempt Paper</button>
+
+<h3>Detailed Answers</h3>
+
+<p><b>Q1 Answer:</b> B – Detail explanation yaha likho</p>
+<p><b>Q2 Answer:</b> C – Detail explanation yaha likho</p>
+
+</div>
+
+</div>
+
+<script>
+
+// ✅ Correct Answers
+const correctAnswers={
+ q1:"B",
+ q2:"C"
+};
+
+let totalTime;
+let timerInterval;
+let currentPaper=null;
+
+// 🔥 CREATE 25 PAPER BUTTONS
+for(let i=1;i<=25;i++){
+ document.getElementById("paperList").innerHTML+=
+ `<button onclick="startPaper(${i})">Paper ${i}</button>`;
+}
+
+// ⏱️ TIMER
+function startTimer(){
+ totalTime=3*60*60;
+ timerInterval=setInterval(()=>{
+  let h=Math.floor(totalTime/3600);
+  let m=Math.floor((totalTime%3600)/60);
+  let s=totalTime%60;
+  document.getElementById("timer").innerText=
+   `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  totalTime--;
+  if(totalTime<=0){
+   clearInterval(timerInterval);
+   submitPaper();
+  }
+ },1000);
+}
+
+// ▶️ START PAPER
+function startPaper(no){
+
+ currentPaper=no;
+
+ // 👉 Already Attempt Check
+ if(localStorage.getItem("paper_"+no) && !localStorage.getItem("reattempt")){
+   alert("Paper already attempted. Reattempt option use karo.");
+   document.getElementById("answerSection").style.display="block";
+   return;
+ }
+
+ document.getElementById("paperList").style.display="none";
+ document.getElementById("examBox").style.display="block";
+ document.getElementById("paperTitle").innerText="NEET Medium Paper "+no;
+
+ createPalette();
+ startTimer();
+}
+
+// 🎯 QUESTION PALETTE
+function createPalette(){
+ let palette=document.getElementById("palette");
+ palette.innerHTML="";
+ let count=Object.keys(correctAnswers).length;
+ for(let i=1;i<=count;i++){
+   palette.innerHTML+=`<button id="pal_q${i}">${i}</button>`;
+ }
+}
+
+// ✅ SUBMIT PAPER
+function submitPaper(){
+
+ clearInterval(timerInterval);
+
+ let correct=0,wrong=0,attempted=0;
+ let totalQ=Object.keys(correctAnswers).length;
+
+ for(let key in correctAnswers){
+
+   let selected=document.querySelector(`input[name="${key}"]:checked`);
+   let resultBox=document.getElementById("result_"+key);
+   let pal=document.getElementById("pal_"+key);
+
+   if(selected){
+     attempted++;
+
+     if(selected.value===correctAnswers[key]){
+       correct++;
+       resultBox.innerHTML="Correct ✅";
+       resultBox.style.color="green";
+       if(pal)pal.className="correct";
+     }else{
+       wrong++;
+       resultBox.innerHTML="Wrong ❌";
+       resultBox.style.color="red";
+       if(pal)pal.className="wrong";
+     }
+   }else{
+     resultBox.innerHTML="Not Attempted ⚠️";
+     resultBox.style.color="orange";
+   }
+ }
+
+ // 🎯 NEET SCORE (+4 / -1)
+ let score=(correct*4)-(wrong*1);
+ let progress=Math.round((attempted/totalQ)*100);
+
+ document.getElementById("scoreBox").innerText="Score: "+score+" / 720";
+ document.getElementById("countBox").innerText=
+   `Correct: ${correct} | Wrong: ${wrong} | Attempted: ${attempted}`;
+
+ document.getElementById("progressBox").innerText=
+   "Progress: "+progress+"%";
+
+ localStorage.setItem("paper_"+currentPaper,"done");
+ localStorage.removeItem("reattempt");
+
+ document.getElementById("examBox").style.display="none";
+ document.getElementById("answerSection").style.display="block";
+}
+
+// 🔄 REATTEMPT
+function reattempt(){
+ localStorage.setItem("reattempt","yes");
+ location.reload();
+}
+
+</script>
+
+</body>
+</html>

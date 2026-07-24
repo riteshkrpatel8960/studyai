@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StudyAI – Online Exam</title>
+  <style>
+    body { font-family: Arial; background:#f2f4f8; padding:20px; }
+    .box { max-width:800px; background:white; padding:20px; margin:auto; border-radius:10px; }
+    #timer { font-size:22px; color:red; text-align:right; }
+    .question { margin-bottom:15px; padding:10px; border-bottom:1px solid #ddd; }
+    button { padding:10px 20px; background:#1e88e5; color:white; border:none; border-radius:5px; }
+    table { margin-top:20px; border-collapse:collapse; }
+    th,td { padding:8px; border:1px solid #ccc; }
+  </style>
+</head>
+
+<body>
+  
+<div class="box">
+  <h2>Enter Your Exam Prompt</h2>
+  <input type="text" id="studentPrompt" 
+   placeholder="JEE Physics Motion 30 questions 60 minutes" 
+   style="width:100%; padding:10px;">
+
+  <button onclick="startExam()">Start Exam</button>
+
+  <pre id="output"></pre>
+</div>
+
+
+<div class="box">
+  
+ <div id="timer" style="display:none;">40:00</div>
+<div id="questions" style="display:none;"></div>
+
+
+  <button onclick="submitExam()">Submit Exam</button>
+
+  <h2 id="score"></h2>
+
+  <table width="100%">
+    <tr>
+      <th>Q No</th>
+      <th>Question</th>
+      <th>Your Answer</th>
+      <th>Correct</th>
+      <th>Status</th>
+    </tr>
+    <tbody id="resultTable"></tbody>
+  </table>
+</div>
+
+<script>
+// 🔹 Master Question Bank (tum yahan lakhon add kar sakte ho)
+const questionBank = [
+ {course:"JEE", subject:"Physics", topic:"motion", q:"What is velocity?", options:["m/s","m","s","kg"], answer:"m/s"},
+ {course:"JEE", subject:"Physics", topic:"motion", q:"What is acceleration?", options:["m/s²","m","s","kg"], answer:"m/s²"},
+ {course:"NEET", subject:"Biology", topic:"cell", q:"Powerhouse of cell?", options:["Nucleus","Mitochondria"], answer:"Mitochondria"}
+];
+
+
+
+// 🔥 Random Paper (40 max)
+function generatePaper(){
+  let shuffled = [...questionBank].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 40);
+}
+
+let paper = [];
+function startExam() {
+  const prompt = document.getElementById("studentPrompt").value.toLowerCase();
+
+const rawTopic = prompt.match(/motion|cell|force|algebra|atom/)?.[0] || "general";
+
+// 🔥 Smart time reader (5 min, 10 min, 60 minutes sab handle karega)
+const timeMatch = prompt.match(/(\d+)\s*(min|minute|minutes)/);
+const time = timeMatch ? parseInt(timeMatch[1]) : 40;
+
+const data = {
+  course: prompt.includes("jee") ? "jee" :
+          prompt.includes("neet") ? "neet" : "ssc",
+
+  subject: prompt.includes("physics") ? "physics" :
+           prompt.includes("math") ? "maths" :
+           prompt.includes("biology") ? "biology" : "chemistry",
+
+  topic: rawTopic,
+  questions: parseInt(prompt.match(/\d+/)?.[0] || 20),
+  time: time
+};
+
+
+  paper = questionBank.filter(q =>
+    q.course.toLowerCase() === data.course &&
+    q.subject.toLowerCase() === data.subject &&
+    q.topic.toLowerCase() === data.topic
+  ).slice(0, data.questions);
+
+  const qBox = document.getElementById("questions");
+  qBox.innerHTML = "";
+
+  paper.forEach((q, i) => {
+    qBox.innerHTML += `
+      <div class="question">
+        <h3>Q${i+1}. ${q.q}</h3>
+        ${q.options.map(opt => `
+          <label>
+            <input type="radio" name="q${i}" value="${opt}"> ${opt}
+          </label><br>
+        `).join("")}
+      </div>
+    `;
+  });
+
+  document.querySelector(".box").style.display = "none";
+  document.getElementById("timer").style.display = "block";
+  document.getElementById("questions").style.display = "block";
+
+  startTimer(data.time);
+}
+
+
+
+
+// 🧮 Result Engine (Safe compare)
+function submitExam(){
+  let score = 0;
+  let resultHTML = "";
+
+  paper.forEach((q, i) => {
+    let user = document.querySelector(`input[name="q${i}"]:checked`)?.value || "";
+    let correct = q.answer;
+
+    let isCorrect = user.trim().toLowerCase() === correct.trim().toLowerCase();
+    let status = isCorrect ? "✅ Correct" : "❌ Wrong";
+    if(isCorrect) score++;
+
+    resultHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${q.q}</td>
+        <td>${user || "Not Answered"}</td>
+        <td>${correct}</td>
+        <td>${status}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("score").innerHTML =
+    "🎯 You scored " + score + " out of " + paper.length;
+
+  document.getElementById("resultTable").innerHTML = resultHTML;
+  window.stopTimer();   
+
+}
+</script>
+<script src="timer.js"></script>
+
+</body>
+</html>

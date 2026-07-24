@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StudyAI - Account</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f8;}
+.header{
+  background:#1e88e5;color:#fff;padding:15px 25px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.container{padding:30px;max-width:1000px;margin:auto;}
+.card{
+  background:#fff;padding:20px;border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:20px;
+}
+.profile{display:flex;align-items:center;}
+.avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:#1e88e5;color:#fff;font-size:32px;
+  display:flex;align-items:center;justify-content:center;margin-right:20px;
+}
+.progress-bar{
+  width:100%;background:#ddd;height:20px;border-radius:10px;
+  overflow:hidden;margin-top:5px;
+}
+.progress{
+  height:100%;background:#1e88e5;width:0%;
+  transition:width .6s ease;
+}
+.small{color:#555;font-size:14px;}
+.logout{cursor:pointer;color:#fff;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>StudyAI Dashboard</h2>
+  <span class="logout" onclick="logout()">Logout</span>
+</div>
+
+<div class="container">
+
+<!-- PROFILE -->
+<div class="card">
+  <div class="profile">
+    <div class="avatar" id="avatar">S</div>
+    <div>
+      <h3 id="name">Student Name</h3>
+      <p class="small" id="email">student@email.com</p>
+      <p class="small">Course: <span id="course">N/A</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PROGRESS -->
+<div class="card">
+  <h3>Progress</h3>
+
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+  <p class="small">Completed: <span id="percent">0%</span></p>
+
+  <!-- 🔥 JEE DETAIL BOX -->
+  <div id="jeeBox" style="display:none;margin-top:20px;">
+
+    <p class="small">JEE Medium</p>
+    <div class="progress-bar">
+      <div class="progress" id="jeeMediumBar"></div>
+    </div>
+    <p class="small"><span id="jeeMediumText">0%</span></p>
+
+    <p class="small">JEE Hard</p>
+    <div class="progress-bar">
+      <div class="progress" id="jeeHardBar"></div>
+    </div>
+    <p class="small"><span id="jeeHardText">0%</span></p>
+
+  </div>
+
+</div>
+
+<script>
+
+// 🔐 AUTH CHECK
+const student = JSON.parse(localStorage.getItem("student"));
+if (!student) window.location = "login.html";
+
+// PROFILE INFO
+document.getElementById("name").innerText = student.name;
+document.getElementById("email").innerText = student.email;
+document.getElementById("avatar").innerText =
+  student.name.charAt(0).toUpperCase();
+
+// COURSE
+let course = localStorage.getItem("selectedCourse") || "N/A";
+document.getElementById("course").innerText = course.toUpperCase();
+
+let progress = 0;
+
+// ==============================
+// 🔥 JEE SPECIAL DUAL PROGRESS
+// ==============================
+
+if(course === "jee"){
+
+  document.getElementById("jeeBox").style.display = "block";
+
+  let medium = JSON.parse(localStorage.getItem("jeeMediumProgress") || "[]");
+  let hard   = JSON.parse(localStorage.getItem("jeeHardProgress") || "[]");
+
+  let mediumPercent = medium.length
+    ? Math.floor((medium.filter(q=>q.completed).length / medium.length)*100)
+    : 0;
+
+  let hardPercent = hard.length
+    ? Math.floor((hard.filter(q=>q.completed).length / hard.length)*100)
+    : 0;
+
+  // individual bars
+  document.getElementById("jeeMediumBar").style.width = mediumPercent + "%";
+  document.getElementById("jeeMediumText").innerText = mediumPercent + "%";
+
+  document.getElementById("jeeHardBar").style.width = hardPercent + "%";
+  document.getElementById("jeeHardText").innerText = hardPercent + "%";
+
+  // TOTAL = 50% + 50%
+  progress = Math.floor((mediumPercent*0.5) + (hardPercent*0.5));
+}
+
+// ==============================
+// 🔥 NORMAL COURSES (NEET / SSC)
+// ==============================
+
+else{
+
+  let saved = JSON.parse(localStorage.getItem(course + "Progress") || "[]");
+
+  let totalQuestions = saved.length;
+  let solvedQuestions = saved.filter(q => q.completed).length;
+
+  progress = totalQuestions
+    ? Math.floor((solvedQuestions / totalQuestions) * 100)
+    : 0;
+}
+
+// MAIN BAR UPDATE
+document.getElementById("progress").style.width = progress + "%";
+document.getElementById("percent").innerText = progress + "%";
+
+// LOGOUT
+function logout(){
+  localStorage.removeItem("student");
+  localStorage.removeItem("selectedCourse");
+  window.location = "studyai.html";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Select Course</title>
+</head>
+<body>
+
+<h2>Select Your Course</h2>
+
+<button onclick="selectCourse('neet-medium')">NEET (Medium)</button>
+<button onclick="selectCourse('jee-hard')">JEE (Hard)</button>
+<button onclick="selectCourse('ssc-medium')">SSC (Medium)</button>
+
+<script>
+function selectCourse(course){
+  localStorage.setItem("selectedCourse", course);
+  window.location = "account.html";
+}
+</script>
+
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Select Course</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#f4f6f8;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      margin:0;
+    }
+    .box{
+      background:#fff;
+      padding:30px;
+      border-radius:10px;
+      width:350px;
+      text-align:center;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2{color:#1e88e5;}
+    button{
+      width:100%;
+      padding:12px;
+      margin:10px 0;
+      font-size:16px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      background:#1e88e5;
+      color:#fff;
+    }
+    button:hover{background:#0d47a1;}
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Select Your Course</h2>
+
+  <button onclick="selectCourse('neet')">NEET </button>
+  <button onclick="selectCourse('jee')">JEE</button>
+  <button onclick="selectCourse('ssc')">SSC</button>
+</div>
+
+<script>
+/* 🔐 LOGIN CHECK */
+const student = JSON.parse(localStorage.getItem("student"));
+if (!student) {
+  // login nahi hai → landing page
+  window.location.href = "studyai.html";
+}
+
+/* 📚 COURSE SELECT */
+function selectCourse(course){
+  localStorage.setItem("selectedCourse", course);
+
+  // course select ke baad dashboard
+  window.location.href = "account.html";
+}
+
+/* 🔙 BACK BUTTON CONTROL */
+history.pushState(null, null, location.href);
+window.onpopstate = function () {
+  window.location.href = "studyai.html";
+};
+</script>
+
+
+</body>
+</html>

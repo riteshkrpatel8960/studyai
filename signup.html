@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StudyAI - Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#f4f6f8;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+    .box{
+      background:#fff;
+      padding:30px;
+      border-radius:10px;
+      width:350px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      text-align:center;
+    }
+    h2{color:#1e88e5;}
+
+    button{
+      width:100%;
+      padding:10px;
+      background:#1e88e5;
+      color:#fff;
+      border:none;
+      font-size:16px;
+      cursor:pointer;
+      border-radius:5px;
+    }
+    button:hover{background:#0d47a1;}
+
+    p{margin-top:15px;}
+    a{color:#1e88e5;text-decoration:none;}
+    #msg{color:red;margin-top:10px;}
+
+    /* 🔥 SAME INPUT STYLE AS LOGIN */
+    .password-box{
+      position: relative;
+      width:100%;
+      margin:10px 0;
+    }
+
+    .password-box input{
+      width:100%;
+      height:44px;
+      padding:10px;
+      padding-right:45px;
+      font-size:16px;
+      box-sizing:border-box;
+    }
+
+    .toggle-eye{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      cursor:pointer;
+      color:#555;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Create Account</h2>
+
+  <form id="signupForm">
+
+    <div class="password-box">
+      <input type="text" id="name" placeholder="Full Name" required>
+    </div>
+
+    <div class="password-box">
+      <input type="email" id="email" placeholder="Email" required>
+    </div>
+
+    <div class="password-box">
+      <input type="password" id="password" placeholder="Password" required>
+
+      <!-- 👁️ CLOSED EYE SVG -->
+      <svg class="toggle-eye" id="eyeIcon" onclick="togglePassword()"
+           width="20" height="20" viewBox="0 0 24 24"
+           fill="none" stroke="#555" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12s4-4 10-4 10 4 10 4"/>
+        <path d="M6 16l-1 2"/>
+        <path d="M10 16v2"/>
+        <path d="M14 16v2"/>
+        <path d="M18 16l1 2"/>
+      </svg>
+    </div>
+
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <p>Already have an account?
+    <a href="login.html">Login</a>
+  </p>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+/* 👁️ SHOW / HIDE PASSWORD */
+function togglePassword(){
+  const pwd = document.getElementById("password");
+  const eye = document.getElementById("eyeIcon");
+
+  if(pwd.type === "password"){
+    pwd.type = "text";
+    eye.style.stroke = "#1e88e5";
+  }else{
+    pwd.type = "password";
+    eye.style.stroke = "#555";
+  }
+}
+
+/* 🚀 SIGNUP LOGIC */
+document.getElementById("signupForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
+
+  const password = document.getElementById("password").value.trim();
+  const msg = document.getElementById("msg");
+
+  msg.innerText = "";
+
+  if(!name || !email || !password){
+    msg.innerText = "All fields are required";
+    return;
+  }
+
+  try{
+    const res = await fetch("http://localhost:3000/signup", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+
+    if(data.status === "ok"){
+      window.location.href = "login.html";
+    }else{
+      msg.innerText = data.message || "Signup failed";
+    }
+
+  }catch(err){
+    console.error(err);
+    msg.innerText = "Server not responding";
+  }
+});
+</script>
+
+</body>
+</html>

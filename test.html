@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StudyAI – JEE Numer 360</title>
+
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:10px;}
+.container{display:flex;gap:20px;}
+.left{flex:3;}
+.right{flex:1;background:#f5f5f5;padding:10px;border-radius:10px;height:400px;overflow:auto;}
+
+button{margin:5px;padding:10px 15px;cursor:pointer;}
+#timer{font-size:22px;color:red;text-align:right;}
+
+.palette button{
+ width:40px;height:40px;margin:3px;border:none;color:#fff;background:#999;
+}
+.answered{background:green;}
+.review{background:orange;}
+.current{border:3px solid blue;}
+
+#examBox{display:none;}
+#answerSection{display:none;background:#f7f7f7;padding:15px;margin-top:20px;}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>JEE Medium – Numer 360</h2>
+
+<div id="paperList"></div>
+
+<div id="examBox">
+
+<h3 id="paperTitle"></h3>
+<div id="timer">03:00:00</div>
+
+<div class="container">
+
+<div class="left">
+<div id="questionArea"></div>
+
+<button onclick="prevQ()">Previous</button>
+<button onclick="markReview()">Mark Review</button>
+<button onclick="nextQ()">Next</button>
+<button onclick="submitPaper()">Submit Paper</button>
+</div>
+
+<div class="right">
+<h4>Questions</h4>
+<div id="palette"></div>
+</div>
+
+</div>
+
+</div>
+
+<div id="answerSection">
+<h3>Result Summary</h3>
+<p id="scoreBox"></p>
+<p id="countBox"></p>
+<p id="progressBox"></p>
+<button onclick="reattempt()">Reattempt Paper</button>
+
+<h3>Detailed Answers</h3>
+<div id="answerDetails"></div>
+</div>
+
+</div>
+
+<script>
+
+// ==========================
+// 📚 JEE PAPERS DATA (PCM STYLE)
+// ==========================
+const papersData={
+
+1:{
+title:"Paper 1",
+questions:[
+{ q:"Paper 1 Biology Question?", options:["A","B","C","D"], answer:"A", explanation:"Explain P1 Q1"},
+{ q:"Paper 1 Physics Question?", options:["A","B","C","D"], answer:"B", explanation:"Explain P1 Q2"}
+]},
+
+2:{
+title:"Paper 2",
+questions:[
+{ q:"Paper 2 Botany Question?", options:["A","B","C","D"], answer:"C", explanation:"Explain P2 Q1"},
+{ q:"Paper 2 Chemistry Question?", options:["A","B","C","D"], answer:"D", explanation:"Explain P2 Q2"}
+]},
+
+3:{
+title:"Paper 3",
+questions:[
+{ q:"Paper 3 Zoology Question?", options:["A","B","C","D"], answer:"B", explanation:"Explain P3 Q1"}
+]},
+
+4:{title:"Paper 4",questions:[{q:"Edit Paper 4 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+5:{title:"Paper 5",questions:[{q:"Edit Paper 5 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+6:{title:"Paper 6",questions:[{q:"Edit Paper 6 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+7:{title:"Paper 7",questions:[{q:"Edit Paper 7 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+8:{title:"Paper 8",questions:[{q:"Edit Paper 8 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+9:{title:"Paper 9",questions:[{q:"Edit Paper 9 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+10:{title:"Paper 10",questions:[{q:"Edit Paper 10 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+11:{title:"Paper 11",questions:[{q:"Edit Paper 11 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+12:{title:"Paper 12",questions:[{q:"Edit Paper 12 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+13:{title:"Paper 13",questions:[{q:"Edit Paper 13 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+14:{title:"Paper 14",questions:[{q:"Edit Paper 14 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+15:{title:"Paper 15",questions:[{q:"Edit Paper 15 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+16:{title:"Paper 16",questions:[{q:"Edit Paper 16 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+17:{title:"Paper 17",questions:[{q:"Edit Paper 17 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+18:{title:"Paper 18",questions:[{q:"Edit Paper 18 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+19:{title:"Paper 19",questions:[{q:"Edit Paper 19 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+20:{title:"Paper 20",questions:[{q:"Edit Paper 20 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+21:{title:"Paper 21",questions:[{q:"Edit Paper 21 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+22:{title:"Paper 22",questions:[{q:"Edit Paper 22 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+23:{title:"Paper 23",questions:[{q:"Edit Paper 23 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+24:{title:"Paper 24",questions:[{q:"Edit Paper 24 Question",options:["A","B","C","D"],answer:"A",explanation:""}]},
+25:{title:"Paper 25",questions:[{q:"Edit Paper 25 Question",options:["A","B","C","D"],answer:"A",explanation:""}]}
+
+};
+
+let currentPaper=null;
+let currentIndex=0;
+let answers={};
+let reviewMarks={};
+let timerInterval;
+let totalTime;
+
+
+// ==========================
+// 🔥 CREATE BUTTONS
+// ==========================
+window.onload=function(){
+
+ let list=document.getElementById("paperList");
+
+ for(let key in papersData){
+   let btn=document.createElement("button");
+   btn.innerText="Paper "+key;
+   btn.onclick=function(){ startPaper(key); };
+   list.appendChild(btn);
+ }
+};
+
+
+// ==========================
+// ▶️ START PAPER
+// ==========================
+function startPaper(no){
+
+ currentPaper=no;
+
+ let savedResult=localStorage.getItem("submitted_"+no);
+ if(savedResult){
+   showResult(JSON.parse(savedResult));
+   return;
+ }
+
+ loadAttempt();
+
+ document.getElementById("paperList").style.display="none";
+ document.getElementById("examBox").style.display="block";
+ document.getElementById("paperTitle").innerText=papersData[no].title;
+
+ createPalette();
+ showQuestion();
+ startTimer();
+}
+
+
+// ==========================
+// ⏱️ TIMER
+// ==========================
+function startTimer(){
+
+ clearInterval(timerInterval);
+
+ let savedTime=localStorage.getItem("time_"+currentPaper);
+ totalTime=savedTime?parseInt(savedTime):3*60*60;
+
+ timerInterval=setInterval(()=>{
+
+  let h=Math.floor(totalTime/3600);
+  let m=Math.floor((totalTime%3600)/60);
+  let s=totalTime%60;
+
+  document.getElementById("timer").innerText=
+  `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  totalTime--;
+  localStorage.setItem("time_"+currentPaper,totalTime);
+
+  if(totalTime<=0) submitPaper();
+
+ },1000);
+}
+
+
+// ==========================
+// 🧠 SHOW QUESTION
+// ==========================
+function showQuestion(){
+
+ let q=papersData[currentPaper].questions[currentIndex];
+
+ document.getElementById("questionArea").innerHTML=`
+ <p><b>Q${currentIndex+1}. ${q.q}</b></p>
+ ${q.options.map(opt=>`
+ <label>
+ <input type="radio" name="opt" value="${opt}"
+ ${answers[currentIndex]==opt?"checked":""}
+ onchange="saveAnswer('${opt}')"> ${opt}
+ </label><br>`).join("")}
+ `;
+
+ updatePalette();
+}
+
+
+// ==========================
+// 💾 SAVE ANSWER
+// ==========================
+function saveAnswer(opt){
+ answers[currentIndex]=opt;
+ saveAttempt();
+ updatePalette();
+}
+
+
+// ==========================
+// ⭐ MARK REVIEW
+// ==========================
+function markReview(){
+
+ if(reviewMarks[currentIndex]) delete reviewMarks[currentIndex];
+ else reviewMarks[currentIndex]=true;
+
+ saveAttempt();
+ updatePalette();
+}
+
+
+// NEXT PREV
+function nextQ(){
+ if(currentIndex<papersData[currentPaper].questions.length-1){
+  currentIndex++;
+  showQuestion();
+ }
+}
+function prevQ(){
+ if(currentIndex>0){
+  currentIndex--;
+  showQuestion();
+ }
+}
+
+
+// ==========================
+// 🎯 PALETTE
+// ==========================
+function createPalette(){
+
+ let html="";
+ let len=papersData[currentPaper].questions.length;
+
+ for(let i=0;i<len;i++){
+  html+=`<button id="pal_${i}" onclick="jump(${i})">${i+1}</button>`;
+ }
+
+ document.getElementById("palette").innerHTML=html;
+}
+
+function jump(i){
+ currentIndex=i;
+ showQuestion();
+}
+
+function updatePalette(){
+
+ let len=papersData[currentPaper].questions.length;
+
+ for(let i=0;i<len;i++){
+
+  let btn=document.getElementById("pal_"+i);
+  btn.className="";
+
+  if(answers[i]) btn.classList.add("answered");
+  if(reviewMarks[i]) btn.classList.add("review");
+  if(i===currentIndex) btn.classList.add("current");
+ }
+}
+
+
+// ==========================
+// 💾 SAVE LOAD ATTEMPT
+// ==========================
+function saveAttempt(){
+ let data={answers,reviewMarks,index:currentIndex};
+ localStorage.setItem("attempt_"+currentPaper,JSON.stringify(data));
+}
+
+function loadAttempt(){
+
+ let saved=localStorage.getItem("attempt_"+currentPaper);
+
+ if(saved){
+  let data=JSON.parse(saved);
+  answers=data.answers||{};
+  reviewMarks=data.reviewMarks||{};
+  currentIndex=data.index||0;
+ }else{
+  answers={};
+  reviewMarks={};
+  currentIndex=0;
+ }
+}
+
+
+// ==========================
+// ✅ SUBMIT PAPER (JEE 360)
+// ==========================
+function submitPaper(){
+
+ clearInterval(timerInterval);
+
+ let correct=0,wrong=0,attempted=0;
+ let questions=papersData[currentPaper].questions;
+
+ questions.forEach((q,i)=>{
+  if(answers[i]){
+   attempted++;
+   if(answers[i]===q.answer) correct++;
+   else wrong++;
+  }
+ });
+
+ // 🔥 JEE NUMER SCORE
+ let score=(correct*4)-(wrong*1);
+ let progress=Math.round((attempted/questions.length)*100);
+
+ let resultData={score,correct,wrong,attempted,progress};
+
+ localStorage.setItem("submitted_"+currentPaper,JSON.stringify(resultData));
+ localStorage.removeItem("attempt_"+currentPaper);
+ localStorage.removeItem("time_"+currentPaper);
+
+ showResult(resultData);
+}
+
+
+// ==========================
+// 📊 RESULT (360 SCALE)
+// ==========================
+function showResult(data){
+
+ document.getElementById("examBox").style.display="none";
+ document.getElementById("answerSection").style.display="block";
+
+ document.getElementById("scoreBox").innerText="Score: "+data.score+" / 360";
+
+ document.getElementById("countBox").innerText=
+ `Correct: ${data.correct} | Wrong: ${data.wrong} | Attempted: ${data.attempted}`;
+
+ document.getElementById("progressBox").innerText=
+ "Progress: "+data.progress+"%";
+
+ showAnswers();
+}
+
+function showAnswers(){
+ let html="";
+ let questions=papersData[currentPaper].questions;
+ questions.forEach((q,i)=>{
+  html+=`<p><b>Q${i+1} Answer:</b> ${q.answer} – ${q.explanation}</p>`;
+ });
+ document.getElementById("answerDetails").innerHTML=html;
+}
+
+function reattempt(){
+ localStorage.removeItem("submitted_"+currentPaper);
+ location.reload();
+}
+
+</script>
+
+</body>
+</html>

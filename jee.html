@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StudyAI – JEE Exam Center</title>
+  <style>
+    body {
+      font-family: Arial;
+      background:#f2f4f8;
+      padding:20px;
+      text-align:center;
+    }
+    .box {
+      max-width:700px;
+      background:white;
+      padding:30px;
+      margin:auto;
+      border-radius:10px;
+      box-shadow:0 0 10px #ccc;
+    }
+    h1 { color:#1e88e5; }
+    button {
+      width:100%;
+      padding:15px;
+      margin-top:15px;
+      font-size:18px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .free { background:#4caf50; color:white; }
+    .medium { background:#ff9800; color:white; }
+    .hard { background:#f44336; color:white; }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h1>🎯 JEE Exam Center</h1>
+  <p>Select your difficulty level</p>
+
+  <button class="free" onclick="openFree()">🟢 Free AI Practice</button>
+  <button class="medium" onclick="openMedium()">🟡 Medium Level Test (₹49)</button>
+  <button class="hard" onclick="openHard()">🔴 Hard Level Test (₹99)</button>
+</div>
+
+<script>
+function openFree(){
+  window.location.href = "ai_paper.html";
+}
+function openMedium(){
+  localStorage.setItem("examLevel","medium");
+  window.location.href = "payment.html";
+}
+
+function openHard(){
+  localStorage.setItem("examLevel","hard");
+  window.location.href = "payment.html";
+}
+
+</script>
+
+</body>
+</html>
