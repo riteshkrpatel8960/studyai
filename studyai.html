@@ -175,7 +175,7 @@ async function answer(){
     "🤖 StudyAI is thinking...";
 
   try{
-    const res = await fetch("http://localhost:3000/ask", {
+   const res = await fetch("https://studyai-rjtd.onrender.com/ask", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({ question: q })
