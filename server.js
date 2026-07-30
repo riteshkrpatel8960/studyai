@@ -198,6 +198,7 @@ app.post("/api/generate", (req, res) => {
   });
 });
 app.post("/forgot-password", async (req, res) => {
+  console.log("Forgot Password API hit");
   try {
     const { email } = req.body;
 
@@ -225,6 +226,7 @@ app.post("/forgot-password", async (req, res) => {
   }
 });
 app.post("/reset-password", async (req, res) => {
+   console.log("Reset Password API hit");
   try {
     const { email, otp, newPassword } = req.body;
 
