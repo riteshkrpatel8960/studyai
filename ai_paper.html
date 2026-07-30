@@ -54,7 +54,7 @@ const t = input.match(/(\d+)\s*(min|minute|minutes)/)?.[1] || 30;
 timeLeft = t * 60;
 
 // Send correct request to AI
-const res = await fetch("http://localhost:3000/ask",{
+const res = await fetch("/ask",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({

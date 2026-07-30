@@ -123,7 +123,7 @@ async function loadPaperQuestions(paperNo){
  try{
 
    const res = await fetch(
-     `http://localhost:3000/api/questions?exam=NEET&paperSet=${paperNo}`
+     `/api/questions?exam=NEET&paperSet=${paperNo}`
    );
 paperQuestions = await res.json();
 

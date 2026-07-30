@@ -117,7 +117,7 @@ async function loadQuestions() {
 
   try {
 
-    const res = await fetch("http://localhost:3000/api/questions?exam=NEET");
+    const res = await fetch("/api/questions?exam=NEET");
 
     questionBank = await res.json();
 
