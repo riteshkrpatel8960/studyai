@@ -286,9 +286,8 @@ app.get("/api/questions", async (req, res) => {
 
 
 app.get("/", (req, res) => {
-  res.send("StudyAI Backend Running 🚀");
+  res.sendFile(path.join(__dirname, "studyai.html"));
 });
-
 // ---------------- START SERVER (LAST LINE) ----------------
 const PORT = process.env.PORT || 3000;
 
