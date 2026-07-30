@@ -290,9 +290,8 @@ app.get("/", (req, res) => {
 });
 
 // ---------------- START SERVER (LAST LINE) ----------------
+const PORT = process.env.PORT || 3000;
 
-app.listen(3000, () => {
-  console.log("✅ StudyAI server running on http://localhost:3000");
+app.listen(PORT, () => {
+  console.log(`✅ StudyAI server running on port ${PORT}`);
 });
-
-
