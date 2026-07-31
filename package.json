@@ -12,7 +12,8 @@
     "nodemailer": "^8.0.1",
     "openai": "^4.0.0",
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^6.0.227"
+    "pdfjs-dist": "^6.0.227",
+    "resend": "^6.18.1"
   },
   "description": "",
   "main": "db.js",
