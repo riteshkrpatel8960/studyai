@@ -16,7 +16,11 @@ body{margin:0;font-family:Arial;background:#f4f6f8;}
   background:#fff;padding:20px;border-radius:10px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:20px;
 }
-.profile{display:flex;align-items:center;}
+.profile{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 .avatar{
   width:80px;height:80px;border-radius:50%;
   background:#1e88e5;color:#fff;font-size:32px;
@@ -32,6 +36,36 @@ body{margin:0;font-family:Arial;background:#f4f6f8;}
 }
 .small{color:#555;font-size:14px;}
 .logout{cursor:pointer;color:#fff;font-weight:bold;}
+.next-btn{
+    width:180px;
+    height:60px;
+    background:#1e88e5;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:22px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.next-btn:hover{
+    background:#1565c0;
+    transform:scale(1.05);
+}
+
+@media(max-width:700px){
+
+.profile{
+    flex-direction:column;
+    gap:20px;
+}
+
+.next-btn{
+    width:100%;
+}
+
+}
 </style>
 </head>
 
@@ -47,12 +81,23 @@ body{margin:0;font-family:Arial;background:#f4f6f8;}
 <!-- PROFILE -->
 <div class="card">
   <div class="profile">
-    <div class="avatar" id="avatar">S</div>
-    <div>
-      <h3 id="name">Student Name</h3>
-      <p class="small" id="email">student@email.com</p>
-      <p class="small">Course: <span id="course">N/A</span></p>
+
+    <div style="display:flex;align-items:center;">
+
+      <div class="avatar" id="avatar">S</div>
+
+      <div>
+        <h3 id="name">Student Name</h3>
+        <p class="small" id="email">student@email.com</p>
+        <p class="small">Course: <span id="course">N/A</span></p>
+      </div>
+
     </div>
+
+    <button class="next-btn" onclick="goToCourse()">
+        Next →
+    </button>
+
   </div>
 </div>
 
@@ -157,6 +202,28 @@ function logout(){
   localStorage.removeItem("student");
   localStorage.removeItem("selectedCourse");
   window.location = "studyai.html";
+}
+
+function goToCourse(){
+
+    switch(course){
+
+        case "jee":
+            window.location.replace("jee.html");
+            break;
+
+        case "neet":
+            window.location.replace("neet.html");
+            break;
+
+        case "ssc":
+            window.location.replace("ssc.html");
+            break;
+
+        default:
+            alert("Please select your course first.");
+    }
+
 }
 
 </script>

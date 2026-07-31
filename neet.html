@@ -43,6 +43,11 @@
 </div>
 
 <script>
+  history.pushState(null, "", location.href);
+
+window.onpopstate = function () {
+    window.location.replace("studyai.html");
+};
 function openFree(){
   window.location.href = "neetai.html";
 }
