@@ -198,31 +198,43 @@ app.post("/api/generate", (req, res) => {
   });
 });
 app.post("/forgot-password", async (req, res) => {
-  console.log("Forgot Password API hit");
   try {
+    console.log("Forgot Password API hit");
+
     const { email } = req.body;
+    console.log("Email:", email);
 
     const student = await Student.findOne({ email });
+
     if (!student) {
+      console.log("Student not found");
       return res.status(404).json({ message: "Student not found" });
     }
 
+    console.log("Student found");
+
     // 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      
-    
+    console.log("Generated OTP:", otp);
 
     // Save OTP + expiry (5 minutes)
     student.resetOTP = await bcrypt.hash(otp, 10);
     student.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
     await student.save();
 
+    console.log("OTP saved in MongoDB");
+
+    console.log("Before sendOTPEmail");
     await sendOTPEmail(email, otp);
+    console.log("After sendOTPEmail");
 
     res.json({ message: "OTP sent to email" });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Something went wrong" });
+    console.error("Forgot Password Error:", err);
+    res.status(500).json({
+      message: err.message
+    });
   }
 });
 app.post("/reset-password", async (req, res) => {
